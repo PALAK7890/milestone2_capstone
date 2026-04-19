@@ -7,7 +7,7 @@ import chromadb
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REG_DIR = BASE_DIR / "data" / "regulations"
-CHROMA_DIR = BASE_DIR / "chroma_store"
+CHROMA_DIR = BASE_DIR / "artifacts" / "chroma_db"
 COLLECTION_NAME = "lending_regulations"
 
 
