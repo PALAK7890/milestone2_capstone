@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Dict, List
 
@@ -7,12 +9,34 @@ import chromadb
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REG_DIR = BASE_DIR / "data" / "regulations"
-CHROMA_DIR = BASE_DIR / "artifacts" / "chroma_db"
+CHROMA_SOURCE_DIR = BASE_DIR / "artifacts" / "chroma_db"
 COLLECTION_NAME = "lending_regulations"
+
+# Streamlit Cloud mounts the repo as read-only. ChromaDB needs write access,
+# so we copy the committed DB to a writable temp directory on first use.
+_WRITABLE_CHROMA_DIR: Path | None = None
+
+
+def _get_chroma_dir() -> Path:
+    global _WRITABLE_CHROMA_DIR
+    if _WRITABLE_CHROMA_DIR is not None and _WRITABLE_CHROMA_DIR.exists():
+        return _WRITABLE_CHROMA_DIR
+
+    if CHROMA_SOURCE_DIR.exists():
+        tmp_dir = Path(tempfile.gettempdir()) / "chroma_db_copy"
+        if tmp_dir.exists():
+            shutil.rmtree(tmp_dir)
+        shutil.copytree(CHROMA_SOURCE_DIR, tmp_dir)
+        _WRITABLE_CHROMA_DIR = tmp_dir
+        return _WRITABLE_CHROMA_DIR
+
+    # Fallback: use the source path directly (works locally)
+    return CHROMA_SOURCE_DIR
 
 
 def get_chroma_collection():
-    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    chroma_dir = _get_chroma_dir()
+    client = chromadb.PersistentClient(path=str(chroma_dir))
     collection = client.get_or_create_collection(name=COLLECTION_NAME)
     return collection
 
@@ -50,30 +74,33 @@ def retrieve_regulations(
     recommended_action: str,
     top_k: int = 3,
 ) -> List[Dict[str, str]]:
-    collection = get_chroma_collection()
+    try:
+        collection = get_chroma_collection()
 
-    query_text = (
-        f"{lending_query}. "
-        f"Risk class: {risk_class}. "
-        f"Recommended action: {recommended_action}. "
-        f"Loan intent: {borrower_profile.get('loan_intent', '')}. "
-        f"Default history: {borrower_profile.get('cb_person_default_on_file', '')}."
-    )
+        query_text = (
+            f"{lending_query}. "
+            f"Risk class: {risk_class}. "
+            f"Recommended action: {recommended_action}. "
+            f"Loan intent: {borrower_profile.get('loan_intent', '')}. "
+            f"Default history: {borrower_profile.get('cb_person_default_on_file', '')}."
+        )
 
-    results = collection.query(query_texts=[query_text], n_results=top_k)
+        results = collection.query(query_texts=[query_text], n_results=top_k)
 
-    documents = results.get("documents", [[]])[0]
-    metadatas = results.get("metadatas", [[]])[0]
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
 
-    output = []
-    for doc, meta in zip(documents, metadatas):
-        output.append({
-            "title": meta.get("title", "Untitled"),
-            "source": meta.get("source", ""),
-            "content": doc[:700] + ("..." if len(doc) > 700 else ""),
-        })
+        output = []
+        for doc, meta in zip(documents, metadatas):
+            output.append({
+                "title": meta.get("title", "Untitled"),
+                "source": meta.get("source", ""),
+                "content": doc[:700] + ("..." if len(doc) > 700 else ""),
+            })
 
-    return output
+        return output
+    except Exception:
+        return []
 
 
 if __name__ == "__main__":
