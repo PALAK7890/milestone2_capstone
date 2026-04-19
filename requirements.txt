@@ -1,7 +1,7 @@
 streamlit==1.44.1
-langgraph==0.2.16
-langchain==0.2.16
-langchain-community==0.2.16
+langgraph
+langchain
+langchain-community
 joblib==1.4.2
 pandas==2.2.2
 numpy==1.26.4
