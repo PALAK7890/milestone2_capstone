@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List
+import os
+from typing import Any, Dict
 
+import streamlit as st
 from huggingface_hub import InferenceClient
-
-from src.config import HF_MODEL, HF_TOKEN
 
 
 SYSTEM_PROMPT = """You are a cautious AI lending decision support assistant.
@@ -13,6 +13,17 @@ You do not make legal claims. You summarize borrower risk, explain major risk dr
 use retrieved regulatory context carefully, and produce a concise JSON object only.
 Avoid hallucinations. If the regulations are generic, say so explicitly.
 """
+
+
+def get_secret(name: str, default: str = "") -> str:
+    try:
+        return st.secrets[name]
+    except Exception:
+        return os.getenv(name, default)
+
+
+HF_TOKEN = get_secret("HF_TOKEN")
+HF_MODEL = get_secret("HF_MODEL", "mistralai/Mistral-7B-Instruct-v0.2")
 
 
 def _build_prompt(payload: Dict[str, Any]) -> str:
@@ -34,43 +45,68 @@ borrower_summary, reasoning_notes, recommendation_summary, disclaimer
 """
 
 
+def _fallback_response(payload: Dict[str, Any], extra_note: str = "") -> Dict[str, str]:
+    borrower = payload["borrower_profile"]
+
+    reasoning = (
+        f"Model probability is {payload['risk_probability']:.2%}, classified as {payload['risk_class']} risk. "
+        f"Primary drivers: {'; '.join(payload['key_risk_drivers'])}."
+    )
+
+    if extra_note:
+        reasoning += f" {extra_note}"
+
+    return {
+        "borrower_summary": (
+            f"Applicant age {borrower['person_age']} with income "
+            f"{borrower['person_income']:.0f} requested a loan of "
+            f"{borrower['loan_amnt']:.0f} for {borrower['loan_intent'].lower()}."
+        ),
+        "reasoning_notes": reasoning,
+        "recommendation_summary": (
+            f"Recommended action: {payload['recommended_action']}. "
+            f"Use retrieved guidance to support a human underwriter decision."
+        ),
+        "disclaimer": (
+            "This tool provides decision support only and must not replace official policy, "
+            "regulatory review, or human judgment."
+        ),
+    }
+
+
 def generate_reasoning(payload: Dict[str, Any]) -> Dict[str, str]:
     if not HF_TOKEN:
-        return {
-            "borrower_summary": (
-                f"Applicant age {payload['borrower_profile']['person_age']} with income "
-                f"{payload['borrower_profile']['person_income']:.0f} requested a loan of "
-                f"{payload['borrower_profile']['loan_amnt']:.0f} for {payload['borrower_profile']['loan_intent'].lower()}."
-            ),
-            "reasoning_notes": (
-                f"Model probability is {payload['risk_probability']:.2%}, classified as {payload['risk_class']} risk. "
-                f"Primary drivers: {'; '.join(payload['key_risk_drivers'])}"
-            ),
-            "recommendation_summary": (
-                f"Recommended action: {payload['recommended_action']}. "
-                f"Use retrieved guidance to support a human underwriter decision."
-            ),
-            "disclaimer": "This tool provides decision support only and must not replace official policy, regulatory review, or human judgment.",
-        }
-
-    client = InferenceClient(api_key=HF_TOKEN)
-    response = client.chat_completion(
-        model=HF_MODEL,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": _build_prompt(payload)},
-        ],
-        max_tokens=500,
-        temperature=0.2,
-    )
-    raw = response.choices[0].message.content
+        return _fallback_response(payload, "HF_TOKEN was not found, so fallback reasoning was used.")
 
     try:
-        return json.loads(raw)
-    except Exception:
-        return {
-            "borrower_summary": "LLM response could not be parsed cleanly; using fallback summary.",
-            "reasoning_notes": raw[:500],
-            "recommendation_summary": f"Recommended action: {payload['recommended_action']}",
-            "disclaimer": "This tool provides decision support only and must not replace official policy, regulatory review, or human judgment.",
-        }
+        client = InferenceClient(api_key=HF_TOKEN)
+
+        response = client.chat_completion(
+            model=HF_MODEL,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": _build_prompt(payload)},
+            ],
+            max_tokens=500,
+            temperature=0.2,
+        )
+
+        raw = response.choices[0].message.content.strip()
+
+        try:
+            parsed = json.loads(raw)
+
+            return {
+                "borrower_summary": parsed.get("borrower_summary", ""),
+                "reasoning_notes": parsed.get("reasoning_notes", ""),
+                "recommendation_summary": parsed.get("recommendation_summary", ""),
+                "disclaimer": parsed.get(
+                    "disclaimer",
+                    "This tool provides decision support only and must not replace official policy, regulatory review, or human judgment.",
+                ),
+            }
+        except Exception:
+            return _fallback_response(payload, f"LLM response could not be parsed cleanly. Raw response: {raw[:300]}")
+
+    except Exception as e:
+        return _fallback_response(payload, f"Hugging Face inference failed: {str(e)}")
