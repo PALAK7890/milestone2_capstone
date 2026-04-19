@@ -18,8 +18,33 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        .main {
-            background-color: #f7f9fc;
+        :root {
+            --bg: #f7f9fc;
+            --text: #0f172a;
+            --muted: #475569;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+            --source-bg: #f8fafc;
+            --source-border: #e2e8f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0b1220;
+                --text: #f1f5f9;
+                --muted: #cbd5e1;
+                --card-bg: #111827;
+                --card-border: #334155;
+                --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+                --source-bg: #0f172a;
+                --source-border: #334155;
+            }
+        }
+
+        .stApp {
+            background-color: var(--bg);
+            color: var(--text);
         }
 
         .block-container {
@@ -31,23 +56,50 @@ st.markdown(
         .title-text {
             font-size: 2.2rem;
             font-weight: 800;
-            color: #0f172a;
+            color: var(--text);
             margin-bottom: 0.2rem;
         }
 
         .subtitle-text {
             font-size: 1rem;
-            color: #475569;
+            color: var(--muted);
             margin-bottom: 1.5rem;
         }
 
         .section-card {
-            background: white;
-            padding: 1.2rem 1.2rem;
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 1.2rem;
             border-radius: 16px;
-            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+            box-shadow: var(--shadow);
             margin-bottom: 1rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--card-border);
+        }
+
+        .section-card h1,
+        .section-card h2,
+        .section-card h3,
+        .section-card p,
+        .section-card div,
+        .section-card span,
+        .section-card li {
+            color: var(--text) !important;
+        }
+
+        .mini-label {
+            font-size: 0.9rem;
+            color: var(--muted) !important;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+
+        .source-box {
+            background: var(--source-bg);
+            border: 1px solid var(--source-border);
+            border-radius: 12px;
+            padding: 0.9rem;
+            margin-bottom: 0.8rem;
+            color: var(--text);
         }
 
         .decision-approved {
@@ -83,32 +135,29 @@ st.markdown(
             text-align: center;
         }
 
-        .mini-label {
-            font-size: 0.9rem;
-            color: #64748b;
-            margin-bottom: 0.3rem;
-            font-weight: 600;
+        /* Better sidebar contrast */
+        section[data-testid="stSidebar"] {
+            border-right: 1px solid var(--card-border);
         }
 
-        .source-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 0.9rem;
-            margin-bottom: 0.8rem;
+        /* Inputs in dark mode */
+        .stTextInput input,
+        .stNumberInput input,
+        .stTextArea textarea {
+            color: var(--text) !important;
         }
 
-        .json-box {
-            background: #0f172a;
-            color: #e2e8f0;
-            border-radius: 12px;
-            padding: 1rem;
+        /* Metric cards blend better */
+        div[data-testid="metric-container"] {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 0.8rem;
+            border-radius: 14px;
         }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 # ---------- Header ----------
 st.markdown('<div class="title-text">AI Lending Decision Support Assistant</div>', unsafe_allow_html=True)
 st.markdown(
