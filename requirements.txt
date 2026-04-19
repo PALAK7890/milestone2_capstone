@@ -8,4 +8,4 @@ numpy==1.26.4
 scikit-learn==1.5.1
 protobuf==3.20.3
 chromadb==0.4.24
-openai
+huggingface_hub

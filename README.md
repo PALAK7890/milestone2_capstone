@@ -46,42 +46,47 @@ flowchart TD
 ```
 
 ## LangGraph workflow
-1. `prepare_features`
-2. `predict_risk`
-3. `explain_risk`
-4. `retrieve_guidelines`
-5. `reason_over_case`
-6. `build_report`
+1. `predict` — runs the ML model to get risk probability, class, and key drivers
+2. `retrieve` — queries the Chroma vector DB for relevant regulation text
+3. `reason` — generates reasoning via Hugging Face LLM (or deterministic fallback)
+4. `report` — assembles the final structured report
 
-LangGraph is designed for low-level, stateful orchestration using nodes and edges in a `StateGraph`. Nodes can contain LLM calls or ordinary Python functions, and the graph is compiled into a deployable workflow. citeturn733899search0turn733899search3turn733899search18
+LangGraph is designed for low-level, stateful orchestration using nodes and edges in a `StateGraph`. Nodes can contain LLM calls or ordinary Python functions, and the graph is compiled into a deployable workflow.
 
 ## RAG notes
-This project uses Chroma as a local persistent vector store. Chroma supports a persistent client for local development and collections that store documents plus metadata, with `.add()` for inserts and `query()` for retrieval. citeturn733899search5turn733899search8turn733899search11
+This project uses Chroma as a local persistent vector store. Chroma supports a persistent client for local development and collections that store documents plus metadata, with `.add()` for inserts and `query()` for retrieval.
 
 ## Open-source model notes
-The report-generation node uses Hugging Face's `InferenceClient`, which supports chat completion with the Hugging Face Inference API and third-party Inference Providers. If no token is provided, the app falls back to deterministic templated reasoning so the project still runs locally. citeturn122203search0turn122203search1turn122203search5turn122203search7
+The report-generation node uses Hugging Face's `InferenceClient` (from the `huggingface_hub` package) for chat completion with the Hugging Face Inference API. If no `HF_TOKEN` is provided, the app falls back to deterministic templated reasoning so the project still runs locally without any API key.
 
 ## UI notes
-The app uses Streamlit forms so borrower inputs are submitted in a single batch instead of causing a rerun on every widget change. Streamlit's API supports this pattern through `st.form`, along with widgets like `st.number_input`, `st.text_input`, and `st.selectbox`, and session persistence via `st.session_state`. citeturn713574search2turn713574search5turn713574search8turn713574search9turn713574search10
+The app uses Streamlit sidebar widgets for borrower input. It uses `st.number_input`, `st.text_input`, `st.selectbox`, and `st.text_area` for data entry, with a single button to trigger the full assessment pipeline.
 
 ## Folder structure
 ```text
-lending_agent_project/
+milestone2_capstone/
 ├── app.py
 ├── requirements.txt
-├── .env.example
 ├── README.md
+├── Report.pdf
+├── .gitignore
 ├── artifacts/
-├── data/
-│   └── regulations/
+│   ├── model_bundle.joblib
+│   ├── metrics.json
+│   ├── decision_tree_model.pkl
+│   ├── feature_columns.pkl
+│   └── chroma_db/
 └── src/
+    ├── __init__.py
     ├── config.py
     ├── schemas.py
     ├── preprocessing.py
     ├── train_model.py
+    ├── model_utils.py
     ├── explain.py
     ├── rag.py
     ├── llm_client.py
+    ├── reasoning.py
     ├── report.py
     └── graph_flow.py
 ```
@@ -89,12 +94,17 @@ lending_agent_project/
 ## Setup
 ```bash
 git clone <your-repo-url>
-cd lending_agent_project
+cd milestone2_capstone
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
 ```
+
+Optionally, set a Hugging Face token for LLM-powered reasoning:
+```bash
+export HF_TOKEN=your_huggingface_token_here
+```
+If not set, the app will use deterministic fallback reasoning.
 
 ## Train model artifacts
 ```bash
