@@ -23,31 +23,35 @@ GRADE_MAPPING = {
 
 
 def _load_artifacts():
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"Model file not found at {MODEL_PATH}. Run: python3 -m src.train_model"
-        )
-    if not FEATURES_PATH.exists():
-        raise FileNotFoundError(
-            f"Feature columns file not found at {FEATURES_PATH}. Run: python3 -m src.train_model"
-        )
-
     model = joblib.load(MODEL_PATH)
     feature_columns = joblib.load(FEATURES_PATH)
     return model, feature_columns
 
 
+def _safe_ratio(loan_amnt: float, income: float) -> float:
+    if income <= 0:
+        return 0
+    return loan_amnt / income
+
+
 def _build_feature_row(
     borrower_profile: Dict[str, Any], feature_columns: List[str]
 ) -> pd.DataFrame:
+
+    income = borrower_profile["person_income"]
+    loan_amnt = borrower_profile["loan_amnt"]
+
+    # compute instead of trusting UI
+    loan_percent_income = _safe_ratio(loan_amnt, income)
+
     row = {
         "person_age": borrower_profile["person_age"],
-        "person_income": borrower_profile["person_income"],
+        "person_income": income,
         "person_emp_length": borrower_profile["person_emp_length"],
         "loan_grade": GRADE_MAPPING[borrower_profile["loan_grade"]],
-        "loan_amnt": borrower_profile["loan_amnt"],
+        "loan_amnt": loan_amnt,
         "loan_int_rate": borrower_profile["loan_int_rate"],
-        "loan_percent_income": borrower_profile["loan_percent_income"],
+        "loan_percent_income": loan_percent_income,
         "cb_person_default_on_file": 1
         if borrower_profile["cb_person_default_on_file"] == "Y"
         else 0,
@@ -59,6 +63,7 @@ def _build_feature_row(
 
     if home_col in feature_columns:
         row[home_col] = 1
+
     if intent_col in feature_columns:
         row[intent_col] = 1
 
@@ -68,24 +73,25 @@ def _build_feature_row(
         if col not in df.columns:
             df[col] = 0
 
-    df = df[feature_columns]
-    return df
+    return df[feature_columns]
 
 
 def _risk_class(prob: float) -> str:
     if prob < 0.20:
         return "Low"
-    if prob < 0.50:
+    elif prob < 0.50:
         return "Medium"
-    return "High"
+    else:
+        return "High"
 
 
 def _recommended_action(prob: float) -> str:
     if prob < 0.20:
         return "Approved"
-    if prob < 0.50:
+    elif prob < 0.50:
         return "Needs Review"
-    return "Rejected"
+    else:
+        return "Rejected"
 
 
 def _pretty_feature_name(name: str) -> str:
@@ -121,6 +127,7 @@ def _top_risk_drivers(model, feature_row: pd.DataFrame, top_n: int = 5) -> List[
 
 def predict_credit_risk(borrower_profile: Dict[str, Any]) -> Dict[str, Any]:
     model, feature_columns = _load_artifacts()
+
     feature_df = _build_feature_row(borrower_profile, feature_columns)
 
     prediction = int(model.predict(feature_df)[0])
