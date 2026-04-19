@@ -1,0 +1,107 @@
+{
+  "decision_tree": {
+    "accuracy": 0.911,
+    "roc_auc": 0.9148,
+    "confusion_matrix": [
+      [
+        6115,
+        254
+      ],
+      [
+        471,
+        1306
+      ]
+    ],
+    "classification_report": {
+      "0": {
+        "precision": 0.9284846644397207,
+        "recall": 0.9601193279949757,
+        "f1-score": 0.9440370513315323,
+        "support": 6369.0
+      },
+      "1": {
+        "precision": 0.8371794871794872,
+        "recall": 0.734946539110861,
+        "f1-score": 0.7827389871141744,
+        "support": 1777.0
+      },
+      "accuracy": 0.9109992634421802,
+      "macro avg": {
+        "precision": 0.882832075809604,
+        "recall": 0.8475329335529184,
+        "f1-score": 0.8633880192228534,
+        "support": 8146.0
+      },
+      "weighted avg": {
+        "precision": 0.9085669993290608,
+        "recall": 0.9109992634421802,
+        "f1-score": 0.9088508666870142,
+        "support": 8146.0
+      }
+    }
+  },
+  "logistic_regression": {
+    "accuracy": 0.8458,
+    "roc_auc": 0.8469,
+    "confusion_matrix": [
+      [
+        6059,
+        310
+      ],
+      [
+        946,
+        831
+      ]
+    ],
+    "classification_report": {
+      "0": {
+        "precision": 0.8649536045681656,
+        "recall": 0.9513267388915058,
+        "f1-score": 0.9060864363690744,
+        "support": 6369.0
+      },
+      "1": {
+        "precision": 0.7283085013146363,
+        "recall": 0.46764209341586943,
+        "f1-score": 0.5695681973954764,
+        "support": 1777.0
+      },
+      "accuracy": 0.8458138963908667,
+      "macro avg": {
+        "precision": 0.7966310529414009,
+        "recall": 0.7094844161536876,
+        "f1-score": 0.7378273168822753,
+        "support": 8146.0
+      },
+      "weighted avg": {
+        "precision": 0.835145312341119,
+        "recall": 0.8458138963908667,
+        "f1-score": 0.8326770439487351,
+        "support": 8146.0
+      }
+    }
+  },
+  "training_shape": {
+    "rows": 32581,
+    "columns": 12
+  },
+  "feature_columns": [
+    "person_age",
+    "person_income",
+    "person_emp_length",
+    "loan_grade",
+    "loan_amnt",
+    "loan_int_rate",
+    "loan_percent_income",
+    "cb_person_default_on_file",
+    "cb_person_cred_hist_length",
+    "person_home_ownership_OTHER",
+    "person_home_ownership_OWN",
+    "person_home_ownership_RENT",
+    "loan_intent_EDUCATION",
+    "loan_intent_HOMEIMPROVEMENT",
+    "loan_intent_MEDICAL",
+    "loan_intent_PERSONAL",
+    "loan_intent_VENTURE"
+  ]
+}
