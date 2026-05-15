@@ -3,7 +3,6 @@ import os
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import json
-import math
 import streamlit as st
 
 from src.graph_flow import build_graph
@@ -35,7 +34,7 @@ section[data-testid="stSidebar"]{
 }
 
 .stApp{
-    background:#060816;
+    background:#050816;
     color:white;
 }
 
@@ -64,9 +63,9 @@ html, body, [class*="css"]{
 }
 
 .logo{
-    font-size:1.8rem;
+    font-size:2rem;
     font-weight:800;
-    background:linear-gradient(90deg,#7C3AED,#06B6D4);
+    background:linear-gradient(90deg,#8B5CF6,#06B6D4);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
 }
@@ -90,70 +89,78 @@ html, body, [class*="css"]{
 .hero{
     position:relative;
     overflow:hidden;
-    border-radius:30px;
-    padding:2.5rem;
+    border-radius:32px;
+    padding:3rem;
     margin-bottom:2rem;
-    background:linear-gradient(135deg,#111827,#1e1b4b,#0f172a);
+    background:linear-gradient(135deg,#111827,#1E1B4B,#0F172A);
     border:1px solid rgba(255,255,255,0.08);
 }
 
 .hero::before{
     content:'';
     position:absolute;
-    width:350px;
-    height:350px;
+    width:400px;
+    height:400px;
     background:#7C3AED;
-    filter:blur(120px);
-    right:-120px;
+    filter:blur(140px);
+    right:-100px;
     top:-100px;
     opacity:0.4;
 }
 
 .hero-title{
-    font-size:3.3rem;
+    font-size:4rem;
     font-weight:800;
     color:white;
-    line-height:1.1;
+    line-height:1.05;
+    position:relative;
+    z-index:2;
 }
 
 .hero-sub{
-    margin-top:1rem;
-    color:#94a3b8;
+    margin-top:1.2rem;
+    color:#94A3B8;
     width:60%;
-    font-size:1rem;
+    font-size:1.05rem;
+    line-height:1.8;
+    position:relative;
+    z-index:2;
 }
 
 .hero-chip{
     display:inline-block;
-    margin-top:1.5rem;
-    padding:0.8rem 1.3rem;
-    border-radius:16px;
+    margin-top:1.8rem;
+    padding:0.9rem 1.4rem;
+    border-radius:18px;
     background:linear-gradient(90deg,#7C3AED,#06B6D4);
     color:white;
     font-weight:700;
+    position:relative;
+    z-index:2;
 }
 
 /* GLASS CARD */
 
 .glass{
-    background:rgba(17,24,39,0.7);
+    background:rgba(17,24,39,0.75);
     border:1px solid rgba(255,255,255,0.08);
     backdrop-filter:blur(18px);
     border-radius:26px;
     padding:1.5rem;
     box-shadow:0 0 30px rgba(0,0,0,0.3);
     transition:0.3s ease;
+    margin-bottom:1rem;
 }
 
 .glass:hover{
     transform:translateY(-4px);
-    border:1px solid rgba(124,58,237,0.5);
+    border:1px solid rgba(124,58,237,0.4);
 }
 
 /* KPI */
 
 .kpi-label{
-    color:#94a3b8;
+    color:#94A3B8;
     font-size:0.9rem;
 }
 
@@ -198,7 +205,7 @@ div[data-baseweb="select"] > div{
     background:linear-gradient(90deg,#7C3AED,#06B6D4);
     border:none;
     border-radius:16px;
-    padding:0.9rem;
+    padding:0.95rem;
     color:white;
     font-size:1rem;
     font-weight:700;
@@ -207,7 +214,7 @@ div[data-baseweb="select"] > div{
 
 .stButton > button:hover{
     transform:scale(1.02);
-    box-shadow:0 0 30px rgba(124,58,237,0.4);
+    box-shadow:0 0 30px rgba(124,58,237,0.45);
 }
 
 /* METRIC */
@@ -222,7 +229,7 @@ div[data-testid="metric-container"]{
 /* DECISION */
 
 .approved{
-    background:linear-gradient(135deg,#16a34a,#22c55e);
+    background:linear-gradient(135deg,#16A34A,#22C55E);
     padding:1.5rem;
     border-radius:24px;
     text-align:center;
@@ -232,7 +239,7 @@ div[data-testid="metric-container"]{
 }
 
 .review{
-    background:linear-gradient(135deg,#f59e0b,#facc15);
+    background:linear-gradient(135deg,#F59E0B,#FACC15);
     padding:1.5rem;
     border-radius:24px;
     text-align:center;
@@ -242,7 +249,7 @@ div[data-testid="metric-container"]{
 }
 
 .rejected{
-    background:linear-gradient(135deg,#dc2626,#ef4444);
+    background:linear-gradient(135deg,#DC2626,#EF4444);
     padding:1.5rem;
     border-radius:24px;
     text-align:center;
@@ -253,16 +260,13 @@ div[data-testid="metric-container"]{
 
 /* RISK BAR */
 
-.risk-wrapper{
-    margin-top:1rem;
-}
-
 .risk-track{
     width:100%;
     height:18px;
     border-radius:20px;
-    background:#1f2937;
+    background:#1F2937;
     overflow:hidden;
+    margin-top:1rem;
 }
 
 .risk-fill{
@@ -271,7 +275,7 @@ div[data-testid="metric-container"]{
     background:linear-gradient(90deg,#7C3AED,#06B6D4);
 }
 
-/* SOURCE CARD */
+/* SOURCE */
 
 .source-card{
     background:#111827;
@@ -288,12 +292,12 @@ div[data-testid="metric-container"]{
 }
 
 .source-content{
-    color:#cbd5e1;
+    color:#CBD5E1;
     line-height:1.7;
 }
 
 .source-ref{
-    color:#7dd3fc;
+    color:#7DD3FC;
     margin-top:0.8rem;
     font-size:0.9rem;
 }
@@ -307,13 +311,17 @@ div[data-testid="metric-container"]{
 
 st.markdown("""
 <div class="topbar">
-    <div class="logo">AI Lending OS</div>
+
+    <div class="logo">
+        AI Lending OS
+    </div>
 
     <div class="nav">
         <div class="nav-chip">Enterprise AI</div>
         <div class="nav-chip">Risk Engine</div>
         <div class="nav-chip">v2.1</div>
     </div>
+
 </div>
 """, unsafe_allow_html=True)
 
@@ -323,6 +331,7 @@ st.markdown("""
 
 st.markdown("""
 <div class="hero">
+
     <div class="hero-title">
         Intelligent Lending <br>
         Decision Platform
@@ -337,17 +346,18 @@ st.markdown("""
     <div class="hero-chip">
         Live Risk Intelligence System
     </div>
+
 </div>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# LAYOUT
+# MAIN LAYOUT
 # =========================================================
 
 left, right = st.columns([1.1, 2])
 
 # =========================================================
-# LEFT INPUT PANEL
+# LEFT PANEL
 # =========================================================
 
 with left:
@@ -440,7 +450,7 @@ with left:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# RIGHT DASHBOARD
+# RIGHT PANEL
 # =========================================================
 
 with right:
@@ -479,17 +489,14 @@ with right:
         </div>
         """, unsafe_allow_html=True)
 
-    st.write("")
-
-    # =====================================================
-    # CUSTOM VISUAL SECTION
-    # =====================================================
-
     c1, c2 = st.columns(2)
 
     with c1:
 
-        risk_score = min(int(loan_percent_income * 100 + loan_int_rate), 100)
+        risk_score = min(
+            int(loan_percent_income * 100 + loan_int_rate),
+            100
+        )
 
         st.markdown('<div class="glass">', unsafe_allow_html=True)
 
@@ -509,23 +516,10 @@ with right:
         """, unsafe_allow_html=True)
 
         st.markdown(f"""
-        <div class="risk-wrapper">
-            <div class="risk-track">
-                <div class="risk-fill" style="width:{risk_score}%"></div>
-            </div>
+        <div class="risk-track">
+            <div class="risk-fill" style="width:{risk_score}%"></div>
         </div>
         """, unsafe_allow_html=True)
-
-        st.write("")
-
-        if risk_score < 40:
-            st.success("Low Risk Borrower")
-
-        elif risk_score < 75:
-            st.warning("Medium Risk Borrower")
-
-        else:
-            st.error("High Risk Borrower")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -540,22 +534,22 @@ with right:
 
         insights = [
             "Stable employment history detected",
-            "Debt-to-income ratio within acceptable range",
-            "Borrower profile shows moderate stability",
-            "Interest exposure appears manageable",
-            "Regulatory verification enabled"
+            "Moderate debt-to-income ratio",
+            "Borrower profile shows healthy stability",
+            "Interest exposure manageable",
+            "Regulatory verification active"
         ]
 
         for item in insights:
             st.markdown(
-                f"• <span style='color:#cbd5e1'>{item}</span>",
+                f"• <span style='color:#CBD5E1'>{item}</span>",
                 unsafe_allow_html=True
             )
 
         st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================================================
-# MAIN ANALYSIS
+# ANALYSIS
 # =========================================================
 
 if run_btn:
@@ -646,8 +640,6 @@ if run_btn:
             str(risk_analysis.get("prediction",0))
         )
 
-    st.write("")
-
     # =====================================================
     # TABS
     # =====================================================
@@ -658,10 +650,6 @@ if run_btn:
         "Borrower",
         "Sources"
     ])
-
-    # =====================================================
-    # OVERVIEW
-    # =====================================================
 
     with tab1:
 
@@ -691,10 +679,6 @@ if run_btn:
 
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # =====================================================
-    # REASONING
-    # =====================================================
-
     with tab2:
 
         st.markdown('<div class="glass">', unsafe_allow_html=True)
@@ -719,10 +703,6 @@ if run_btn:
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # =====================================================
-    # PROFILE
-    # =====================================================
-
     with tab3:
 
         st.markdown('<div class="glass">', unsafe_allow_html=True)
@@ -732,10 +712,6 @@ if run_btn:
         st.json(borrower_profile)
 
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # =====================================================
-    # SOURCES
-    # =====================================================
 
     with tab4:
 
