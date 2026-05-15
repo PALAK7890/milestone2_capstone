@@ -2,558 +2,235 @@ from __future__ import annotations
 import os
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
+
 import json
 import streamlit as st
 
 from src.graph_flow import build_graph
 
-# =========================================================
-# PAGE CONFIG
-# =========================================================
-
 st.set_page_config(
-    page_title="AI Lending OS",
-    page_icon="🟣",
+    page_title="AI Lending Decision Support",
+    page_icon="💳",
     layout="wide",
-    initial_sidebar_state="collapsed"
 )
 
-# =========================================================
-# STYLING
-# =========================================================
-
-st.markdown("""
-<style>
-
-#MainMenu {visibility:hidden;}
-footer {visibility:hidden;}
-header {visibility:hidden;}
-
-section[data-testid="stSidebar"]{
-    display:none;
-}
-
-.stApp{
-    background:#050816;
-    color:white;
-}
-
-/* MAIN */
-
-.block-container{
-    max-width:1600px;
-    padding-top:1rem;
-    padding-left:2rem;
-    padding-right:2rem;
-}
-
-/* FONT */
-
-html, body, [class*="css"]{
-    font-family: 'Inter', sans-serif;
-}
-
-/* TOPBAR */
-
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:2rem;
-}
-
-.logo{
-    font-size:2rem;
-    font-weight:800;
-    background:linear-gradient(90deg,#8B5CF6,#06B6D4);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-}
-
-.nav{
-    display:flex;
-    gap:1rem;
-}
-
-.nav-chip{
-    padding:0.7rem 1rem;
-    border-radius:14px;
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.08);
-    color:#cbd5e1;
-    font-size:0.9rem;
-}
-
-/* HERO */
-
-.hero{
-    position:relative;
-    overflow:hidden;
-    border-radius:32px;
-    padding:3rem;
-    margin-bottom:2rem;
-    background:linear-gradient(135deg,#111827,#1E1B4B,#0F172A);
-    border:1px solid rgba(255,255,255,0.08);
-}
-
-.hero::before{
-    content:'';
-    position:absolute;
-    width:400px;
-    height:400px;
-    background:#7C3AED;
-    filter:blur(140px);
-    right:-100px;
-    top:-100px;
-    opacity:0.4;
-}
-
-.hero-title{
-    font-size:4rem;
-    font-weight:800;
-    color:white;
-    line-height:1.05;
-    position:relative;
-    z-index:2;
-}
-
-.hero-sub{
-    margin-top:1.2rem;
-    color:#94A3B8;
-    width:60%;
-    font-size:1.05rem;
-    line-height:1.8;
-    position:relative;
-    z-index:2;
-}
-
-.hero-chip{
-    display:inline-block;
-    margin-top:1.8rem;
-    padding:0.9rem 1.4rem;
-    border-radius:18px;
-    background:linear-gradient(90deg,#7C3AED,#06B6D4);
-    color:white;
-    font-weight:700;
-    position:relative;
-    z-index:2;
-}
-
-/* GLASS CARD */
-
-.glass{
-    background:rgba(17,24,39,0.75);
-    border:1px solid rgba(255,255,255,0.08);
-    backdrop-filter:blur(18px);
-    border-radius:26px;
-    padding:1.5rem;
-    box-shadow:0 0 30px rgba(0,0,0,0.3);
-    transition:0.3s ease;
-    margin-bottom:1rem;
-}
-
-.glass:hover{
-    transform:translateY(-4px);
-    border:1px solid rgba(124,58,237,0.4);
-}
-
-/* KPI */
-
-.kpi-label{
-    color:#94A3B8;
-    font-size:0.9rem;
-}
-
-.kpi-value{
-    color:white;
-    font-size:2rem;
-    font-weight:800;
-    margin-top:0.5rem;
-}
-
-/* SECTION */
-
-.section-title{
-    color:white;
-    font-size:1.2rem;
-    font-weight:700;
-    margin-bottom:1rem;
-}
-
-/* INPUTS */
-
-.stTextInput input,
-.stNumberInput input,
-.stTextArea textarea{
-    background:#111827 !important;
-    color:white !important;
-    border-radius:14px !important;
-    border:1px solid rgba(255,255,255,0.08) !important;
-}
-
-div[data-baseweb="select"] > div{
-    background:#111827 !important;
-    border-radius:14px !important;
-    border:1px solid rgba(255,255,255,0.08) !important;
-    color:white !important;
-}
-
-/* BUTTON */
-
-.stButton > button{
-    width:100%;
-    background:linear-gradient(90deg,#7C3AED,#06B6D4);
-    border:none;
-    border-radius:16px;
-    padding:0.95rem;
-    color:white;
-    font-size:1rem;
-    font-weight:700;
-    transition:0.3s ease;
-}
-
-.stButton > button:hover{
-    transform:scale(1.02);
-    box-shadow:0 0 30px rgba(124,58,237,0.45);
-}
-
-/* METRIC */
-
-div[data-testid="metric-container"]{
-    background:rgba(17,24,39,0.7);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:20px;
-    padding:1rem;
-}
-
-/* DECISION */
-
-.approved{
-    background:linear-gradient(135deg,#16A34A,#22C55E);
-    padding:1.5rem;
-    border-radius:24px;
-    text-align:center;
-    font-size:2rem;
-    font-weight:800;
-    color:white;
-}
-
-.review{
-    background:linear-gradient(135deg,#F59E0B,#FACC15);
-    padding:1.5rem;
-    border-radius:24px;
-    text-align:center;
-    font-size:2rem;
-    font-weight:800;
-    color:black;
-}
-
-.rejected{
-    background:linear-gradient(135deg,#DC2626,#EF4444);
-    padding:1.5rem;
-    border-radius:24px;
-    text-align:center;
-    font-size:2rem;
-    font-weight:800;
-    color:white;
-}
-
-/* RISK BAR */
-
-.risk-track{
-    width:100%;
-    height:18px;
-    border-radius:20px;
-    background:#1F2937;
-    overflow:hidden;
-    margin-top:1rem;
-}
-
-.risk-fill{
-    height:100%;
-    border-radius:20px;
-    background:linear-gradient(90deg,#7C3AED,#06B6D4);
-}
-
-/* SOURCE */
-
-.source-card{
-    background:#111827;
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:20px;
-    padding:1rem;
-    margin-bottom:1rem;
-}
-
-.source-title{
-    color:white;
-    font-weight:700;
-    margin-bottom:0.7rem;
-}
-
-.source-content{
-    color:#CBD5E1;
-    line-height:1.7;
-}
-
-.source-ref{
-    color:#7DD3FC;
-    margin-top:0.8rem;
-    font-size:0.9rem;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# =========================================================
-# TOPBAR
-# =========================================================
-
-st.markdown("""
-<div class="topbar">
-
-    <div class="logo">
-        AI Lending OS
-    </div>
-
-    <div class="nav">
-        <div class="nav-chip">Enterprise AI</div>
-        <div class="nav-chip">Risk Engine</div>
-        <div class="nav-chip">v2.1</div>
-    </div>
-
-</div>
-""", unsafe_allow_html=True)
-
-# =========================================================
-# HERO
-# =========================================================
-
-st.markdown("""
-<div class="hero">
-
-    <div class="hero-title">
-        Intelligent Lending <br>
-        Decision Platform
-    </div>
-
-    <div class="hero-sub">
-        AI-powered borrower risk assessment, predictive analytics,
-        automated regulatory intelligence, and enterprise-grade
-        lending recommendations.
-    </div>
-
-    <div class="hero-chip">
-        Live Risk Intelligence System
-    </div>
-
-</div>
-""", unsafe_allow_html=True)
-
-# =========================================================
-# MAIN LAYOUT
-# =========================================================
-
-left, right = st.columns([1.1, 2])
-
-# =========================================================
-# LEFT PANEL
-# =========================================================
-
-with left:
-
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-    st.markdown(
-        '<div class="section-title">Borrower Configuration</div>',
-        unsafe_allow_html=True
-    )
-
-    person_age = st.number_input("Age", 18, 100, 30)
-
-    person_income = st.number_input(
-        "Annual Income",
-        0,
-        10000000,
-        50000
-    )
-
-    person_home_ownership = st.selectbox(
-        "Home Ownership",
-        ["RENT", "OWN", "MORTGAGE", "OTHER"]
-    )
-
-    person_emp_length = st.number_input(
-        "Employment Length",
-        0.0,
-        50.0,
-        5.0
-    )
-
-    loan_intent = st.selectbox(
-        "Loan Purpose",
-        [
-            "EDUCATION",
-            "MEDICAL",
-            "VENTURE",
-            "PERSONAL",
-            "HOMEIMPROVEMENT",
-            "DEBTCONSOLIDATION"
-        ]
-    )
-
-    loan_grade = st.selectbox(
-        "Loan Grade",
-        ["A","B","C","D","E","F","G"]
-    )
-
-    loan_amnt = st.number_input(
-        "Loan Amount",
-        0,
-        1000000,
-        15000
-    )
-
-    loan_int_rate = st.number_input(
-        "Interest Rate",
-        0.0,
-        100.0,
-        12.5
-    )
-
-    loan_percent_income = st.number_input(
-        "Loan Percent Income",
-        0.0,
-        1.0,
-        0.30
-    )
-
-    cb_person_default_on_file = st.selectbox(
-        "Previous Default",
-        ["N","Y"]
-    )
-
-    cb_person_cred_hist_length = st.number_input(
-        "Credit History Length",
-        0,
-        50,
-        6
-    )
-
-    lending_query = st.text_area(
-        "Lending Query",
-        "Should this borrower be approved?"
-    )
-
-    run_btn = st.button("Analyze Borrower")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# =========================================================
-# RIGHT PANEL
-# =========================================================
-
-with right:
-
-    k1, k2, k3, k4 = st.columns(4)
-
-    with k1:
-        st.markdown(f"""
-        <div class="glass">
-            <div class="kpi-label">Borrower Age</div>
-            <div class="kpi-value">{person_age}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with k2:
-        st.markdown(f"""
-        <div class="glass">
-            <div class="kpi-label">Income</div>
-            <div class="kpi-value">₹{person_income:,}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with k3:
-        st.markdown(f"""
-        <div class="glass">
-            <div class="kpi-label">Loan</div>
-            <div class="kpi-value">₹{loan_amnt:,}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with k4:
-        st.markdown(f"""
-        <div class="glass">
-            <div class="kpi-label">Interest</div>
-            <div class="kpi-value">{loan_int_rate}%</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-
-        risk_score = min(
-            int(loan_percent_income * 100 + loan_int_rate),
-            100
-        )
-
-        st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-        st.markdown(
-            '<div class="section-title">Risk Probability</div>',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(f"""
-        <div style="
-            font-size:4rem;
-            font-weight:800;
-            color:white;
-        ">
-            {risk_score}%
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown(f"""
-        <div class="risk-track">
-            <div class="risk-fill" style="width:{risk_score}%"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with c2:
-
-        st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-        st.markdown(
-            '<div class="section-title">AI Insights</div>',
-            unsafe_allow_html=True
-        )
-
-        insights = [
-            "Stable employment history detected",
-            "Moderate debt-to-income ratio",
-            "Borrower profile shows healthy stability",
-            "Interest exposure manageable",
-            "Regulatory verification active"
-        ]
-
-        for item in insights:
-            st.markdown(
-                f"• <span style='color:#CBD5E1'>{item}</span>",
-                unsafe_allow_html=True
-            )
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# =========================================================
-# ANALYSIS
-# =========================================================
-
+# ---------- Custom Styling ----------
+st.markdown(
+    """
+    <style>
+        :root {
+            --bg: #f7f9fc;
+            --text: #0f172a;
+            --muted: #475569;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+            --source-bg: #f8fafc;
+            --source-border: #e2e8f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0b1220;
+                --text: #f1f5f9;
+                --muted: #cbd5e1;
+                --card-bg: #111827;
+                --card-border: #334155;
+                --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+                --source-bg: #0f172a;
+                --source-border: #334155;
+            }
+        }
+
+        .stApp {
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        .block-container {
+            padding-top: 1.5rem;
+            padding-bottom: 2rem;
+            max-width: 1250px;
+        }
+
+        .title-text {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.2rem;
+        }
+
+        .subtitle-text {
+            font-size: 1rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 1.2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            border: 1px solid var(--card-border);
+        }
+
+        .section-card h1,
+        .section-card h2,
+        .section-card h3,
+        .section-card p,
+        .section-card div,
+        .section-card span,
+        .section-card li {
+            color: var(--text) !important;
+        }
+
+        .mini-label {
+            font-size: 0.9rem;
+            color: var(--muted) !important;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+
+        .source-box {
+            background: var(--source-bg);
+            border: 1px solid var(--source-border);
+            border-radius: 12px;
+            padding: 0.9rem;
+            margin-bottom: 0.8rem;
+            color: var(--text);
+        }
+
+        .decision-approved {
+            padding: 1rem 1.2rem;
+            border-radius: 14px;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 1px solid #86efac;
+            text-align: center;
+        }
+
+        .decision-review {
+            padding: 1rem 1.2rem;
+            border-radius: 14px;
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 1px solid #fcd34d;
+            text-align: center;
+        }
+
+        .decision-rejected {
+            padding: 1rem 1.2rem;
+            border-radius: 14px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 1px solid #fca5a5;
+            text-align: center;
+        }
+
+        /* Better sidebar contrast */
+        section[data-testid="stSidebar"] {
+            border-right: 1px solid var(--card-border);
+        }
+
+        /* Inputs in dark mode */
+        .stTextInput input,
+        .stNumberInput input,
+        .stTextArea textarea {
+            color: var(--text) !important;
+        }
+
+        /* Metric cards blend better */
+        div[data-testid="metric-container"] {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 0.8rem;
+            border-radius: 14px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+# ---------- Header ----------
+st.markdown('<div class="title-text">AI Lending Decision Support Assistant</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="subtitle-text">Credit risk prediction, regulation retrieval, and structured lending recommendations</div>',
+    unsafe_allow_html=True,
+)
+
+# ---------- Sidebar Input ----------
+st.sidebar.header("Borrower Input")
+st.sidebar.markdown("Enter the borrower profile and run the assessment.")
+
+person_age = st.sidebar.number_input("Age", min_value=18, max_value=100, value=30)
+person_income = st.sidebar.number_input("Annual Income", min_value=0, value=50000)
+person_home_ownership = st.sidebar.selectbox(
+    "Home Ownership",
+    ["RENT", "OWN", "MORTGAGE", "OTHER"]
+)
+
+person_emp_length = st.sidebar.number_input(
+    "Employment Length (years)", min_value=0.0, max_value=60.0, value=5.0
+)
+
+loan_intent = st.sidebar.selectbox(
+    "Loan Purpose",
+    ["EDUCATION", "MEDICAL", "VENTURE", "PERSONAL", "HOMEIMPROVEMENT", "DEBTCONSOLIDATION"]
+)
+
+loan_grade = st.sidebar.selectbox(
+    "Loan Grade",
+    ["A", "B", "C", "D", "E", "F", "G"]
+)
+
+loan_amnt = st.sidebar.number_input("Loan Amount", min_value=0, value=15000)
+loan_int_rate = st.sidebar.number_input(
+    "Interest Rate (%)", min_value=0.0, max_value=100.0, value=12.5
+)
+loan_percent_income = st.sidebar.number_input(
+    "Loan Percent of Income", min_value=0.0, max_value=1.0, value=0.30
+)
+
+cb_person_default_on_file = st.sidebar.selectbox(
+    "Previous Default on File",
+    ["N", "Y"]
+)
+
+cb_person_cred_hist_length = st.sidebar.number_input(
+    "Credit History Length", min_value=0, max_value=50, value=6
+)
+
+lending_query = st.sidebar.text_area(
+    "Lending Query",
+    value="Should this borrower be approved for a personal loan?"
+)
+
+run_btn = st.sidebar.button("Analyze Borrower", use_container_width=True)
+
+# ---------- Top Dashboard Preview ----------
+top1, top2, top3, top4 = st.columns(4)
+
+with top1:
+    st.markdown('<div class="section-card"><div class="mini-label">Borrower Age</div><h3>{}</h3></div>'.format(person_age), unsafe_allow_html=True)
+
+with top2:
+    st.markdown('<div class="section-card"><div class="mini-label">Income</div><h3>₹{:,.0f}</h3></div>'.format(person_income), unsafe_allow_html=True)
+
+with top3:
+    st.markdown('<div class="section-card"><div class="mini-label">Loan Amount</div><h3>₹{:,.0f}</h3></div>'.format(loan_amnt), unsafe_allow_html=True)
+
+with top4:
+    st.markdown('<div class="section-card"><div class="mini-label">Interest Rate</div><h3>{:.2f}%</h3></div>'.format(loan_int_rate), unsafe_allow_html=True)
+
+# ---------- Main Processing ----------
 if run_btn:
-
     borrower_profile = {
         "person_age": int(person_age),
         "person_income": int(person_income),
@@ -573,175 +250,105 @@ if run_btn:
         "lending_query": lending_query,
     }
 
-    with st.spinner("Running AI Lending Analysis..."):
-
+    with st.spinner("Running credit risk assessment..."):
         graph = build_graph()
         result = graph.invoke(initial_state)
-
         report = result["final_report"]
 
     decision = report.get("decision", "Needs Review")
     risk_analysis = report.get("risk_analysis", {})
     sources = report.get("sources", [])
 
-    st.write("")
-
-    # =====================================================
-    # DECISION BANNER
-    # =====================================================
-
+    # ---------- Decision Banner ----------
     if decision == "Approved":
-
-        st.markdown("""
-        <div class="approved">
-            APPROVED • LOW RISK
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f'<div class="decision-approved">✅ Final Recommendation: {decision}</div>', unsafe_allow_html=True)
     elif decision == "Rejected":
-
-        st.markdown("""
-        <div class="rejected">
-            REJECTED • HIGH RISK
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f'<div class="decision-rejected">❌ Final Recommendation: {decision}</div>', unsafe_allow_html=True)
     else:
-
-        st.markdown("""
-        <div class="review">
-            MANUAL REVIEW REQUIRED
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="decision-review">⚠️ Final Recommendation: {decision}</div>', unsafe_allow_html=True)
 
     st.write("")
 
-    # =====================================================
-    # METRICS
-    # =====================================================
-
+    # ---------- Risk Metrics ----------
     m1, m2, m3 = st.columns(3)
-
     with m1:
-        st.metric(
-            "Risk Probability",
-            f"{risk_analysis.get('risk_probability',0):.2%}"
-        )
-
+        st.metric("Risk Probability", f"{risk_analysis.get('risk_probability', 0.0):.2%}")
     with m2:
-        st.metric(
-            "Risk Class",
-            risk_analysis.get("risk_class","Unknown")
-        )
-
+        st.metric("Risk Class", risk_analysis.get("risk_class", "Unknown"))
     with m3:
-        st.metric(
-            "Prediction",
-            str(risk_analysis.get("prediction",0))
-        )
+        st.metric("Predicted Class", str(risk_analysis.get("prediction", 0)))
 
-    # =====================================================
-    # TABS
-    # =====================================================
+    # ---------- Main Content ----------
+    left, right = st.columns([1.2, 1])
 
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Overview",
-        "AI Reasoning",
-        "Borrower",
-        "Sources"
-    ])
+    with left:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.subheader("Borrower Summary")
+        st.write(report.get("borrower_summary", ""))
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    with tab1:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.subheader("Risk Reasoning")
+        st.write(report.get("reasoning_notes", ""))
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        o1, o2 = st.columns(2)
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.subheader("Recommendation Summary")
+        st.write(report.get("recommendation_summary", ""))
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        with o1:
-
-            st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-            st.subheader("Borrower Summary")
-
-            st.write(
-                report.get("borrower_summary","")
-            )
-
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with o2:
-
-            st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-            st.subheader("Recommendation")
-
-            st.write(
-                report.get("recommendation_summary","")
-            )
-
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    with tab2:
-
-        st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-        st.subheader("AI Risk Reasoning")
-
-        st.write(
-            report.get("reasoning_notes","")
-        )
-
-        drivers = risk_analysis.get(
-            "key_risk_drivers",
-            []
-        )
-
+    with right:
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.subheader("Key Risk Drivers")
+        drivers = risk_analysis.get("key_risk_drivers", [])
         if drivers:
-
-            st.write("### Key Drivers")
-
             for driver in drivers:
                 st.write(f"• {driver}")
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with tab3:
-
-        st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-        st.subheader("Borrower Profile")
-
-        st.json(borrower_profile)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with tab4:
-
-        st.markdown('<div class="glass">', unsafe_allow_html=True)
-
-        st.subheader("Regulatory Sources")
-
-        if sources:
-
-            for source in sources:
-
-                st.markdown(f"""
-                <div class="source-card">
-
-                    <div class="source-title">
-                        {source.get("title","Untitled")}
-                    </div>
-
-                    <div class="source-content">
-                        {source.get("content","")}
-                    </div>
-
-                    <div class="source-ref">
-                        {source.get("source","")}
-                    </div>
-
-                </div>
-                """, unsafe_allow_html=True)
-
         else:
-            st.info("No regulatory sources retrieved.")
+            st.write("No major drivers identified.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.subheader("Borrower Profile Snapshot")
+        st.json(borrower_profile)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---------- Sources ----------
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.subheader("Regulatory Sources")
+    if sources:
+        for idx, source in enumerate(sources, start=1):
+            st.markdown(f"""
+            <div class="source-box">
+                <b>Source {idx}: {source.get("title", "Untitled")}</b><br><br>
+                {source.get("content", "")}<br><br>
+                <i>Reference: {source.get("source", "")}</i>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("No regulatory sources retrieved.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---------- Disclaimer ----------
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.subheader("Disclaimer")
+    st.warning(report.get("disclaimer", ""))
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---------- Expandable JSON ----------
+    with st.expander("View Full Structured Report (JSON)"):
+        st.code(json.dumps(report, indent=2), language="json")
+
+else:
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.subheader("How this works")
+    st.write(
+        """
+        This lending assistant:
+        - predicts borrower credit risk,
+        - explains the important risk drivers,
+        - retrieves regulatory guidance using RAG,
+        - and generates a structured lending recommendation.
+        """
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
